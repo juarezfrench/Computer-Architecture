@@ -10,10 +10,24 @@ class CPU:
         self.ram = [0] * 256
         self.reg = [0] * 8
         self.pc = 0
+        self.pc = 0
+        self.running = False
+        self.instructions = {
+            0b10000010: self.handle_LDI,
+            0b01000111: self.handle_PRN,
+            0b00000001: self.handle_HLT,
+            
+        }    
 
         
-        pass
+    def handle_LDI(self, ops):
+        self.MAR = self.ram_read(self.PC + 1)
+        self.MDR = self.ram_read(self.PC + 2)
+        
+    def handle_PRN(self, ops):
+        self.MAR = self.ram_read(self.PC + 1)   
 
+    
     def load(self):
         """Load a program into memory."""
 
