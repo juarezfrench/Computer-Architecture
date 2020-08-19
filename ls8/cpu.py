@@ -10,28 +10,46 @@ class CPU:
         self.ram = [0] * 256
         self.reg = [0] * 8
         self.pc = 0
-        self.pc = 0
-        self.running = False
+        # self.ir = 0 # Instruction Register
+        # self.mar = 0 # Memory Address Register
+        # self.mdr = 0 # Memory Data Register   
+        self.running = True
         self.instructions = {
             0b10000010: self.handle_LDI,
             0b01000111: self.handle_PRN,
             0b00000001: self.handle_HLT,
-            
+            0b10100010: self.handle_MUL
         }    
 
-        
-    def handle_LDI(self, ops):
-        self.MAR = self.ram_read(self.PC + 1)
-        self.MDR = self.ram_read(self.PC + 2)
-        
-    def handle_PRN(self, ops):
-        self.MAR = self.ram_read(self.PC + 1)   
-
-    
     def load(self):
         """Load a program into memory."""
 
-        address = 0
+        # self.mar = 0
+        try:
+            address = 0
+
+            with open(filename) as f:
+                for line in f:
+                    # split before comment
+                    comment_split = line.split('#')
+
+                    # convert to a number splitting and stripping
+                    num = comment_split[0].strip()
+
+                    if num == '':
+                        continue  # ignore blank lines
+                    
+                    val = int(num, 2)
+                    
+                    # store val in memory at the given address
+                    self.ram[address] = val
+
+                    address += 1
+
+        except FileNotFoundError:
+            print(f"{sys.argv[0]}: {filename} not found!")
+            sys.exit(2)
+       
 
         # For now, we've just hardcoded a program:
 
@@ -46,8 +64,11 @@ class CPU:
         ]
 
         for instruction in program:
-            self.ram[address] = instruction
-            address += 1
+            while self.mar < len(program):
+                self.mdr = program[self.mar]
+                self.ram_write(self.mdr, self.mar)
+                self.mar += 1
+
 
 
     def alu(self, op, reg_a, reg_b):
@@ -81,4 +102,27 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        pass
+        # print("running")
+        self.running = True
+
+    def handle_HLT(self, ops):
+        self.running = False
+
+    def handle_LDI(self, ops):
+        self.mar = self.ram_read(self.pc + 1)
+        self.mdr = self.ram_read(self.pc + 2)
+        
+    def handle_PRN(self, ops):
+        self.mar = self.ram_read(self.pc + 1)  
+    
+    def ram_read(self, memory_address):
+        return self.ram[memory_address]
+
+    def ram_write(self, memory_data, memory_address):
+        self.ram[memory_address] = memory_data      
+
+
+newCPU = CPU()
+
+newCPU.run()
+
