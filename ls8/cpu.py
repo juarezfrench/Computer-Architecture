@@ -21,6 +21,7 @@ JMP = 0b01010100
 JNE = 0b01010110
 HLT = 0b00000001
 SP = 7
+FL = 0
 
 class CPU:
     """Main CPU class."""
@@ -30,8 +31,7 @@ class CPU:
         self.ram = [0] * 256
         self.pc = 0
         self.reg = [0] * 8
-        self.fl = 0b00000000
-        self.reg[SP] = 0xF4
+        self.FL = 0
         self.branchtable = {
             CALL: self.call,
             ADD : self.alu,
@@ -50,6 +50,7 @@ class CPU:
             JMP : self.jmp,
             JNE : self.jne,
             HLT : self.hlt
+           
         }
     
     def load(self, filename):
@@ -105,6 +106,13 @@ class CPU:
     def ram_write(self, value, address):
         self.ram[address] = value
 
+    def bitwise_addition(self, num1, num2): # recursive
+        if num2 <= 0:
+            return num1
+        else: #                          sum of bits   common bits and shift
+            return self.bitwise_addition(num1 ^ num2, (num1 & num2) << 1)
+
+
     def run(self):
         """Run the CPU.       
         1. read mem at PC
@@ -143,7 +151,7 @@ class CPU:
 
         print(f"TRACE: %02X | %02X %02X %02X %02X |" % (
             self.pc,
-            self.fl,
+            self.FL,
             #self.ie,
             self.ram_read(self.pc),
             self.ram_read(self.pc + 1),
@@ -157,6 +165,7 @@ class CPU:
 
     def ldi(self, reg_a, reg_b):
         self.reg[reg_a] = reg_b 
+        #self.PC += 1
     
     def pop(self, reg_a, reg_b=None):
         #get value at memory[sp]
@@ -195,6 +204,27 @@ class CPU:
     def jeq(self,ops):
         if self.FL == 1:
             self.MAR = self.ram_read(self.PC + 1)
-            self.PC = self.REG[self.MAR]
+            self.PC = self.reg[self.MAR]
+        else:
+            self.PC = self.bitwise_addition(self.PC, ops)
+
+    def jge(self,ops):
+        if self.FL == 1:
+            self.MAR = self.ram_read(self.PC + 1)
+            self.PC = self.reg[self.MAR]
+        else:
+            self.PC = self.bitwise_addition(self.PC, ops)
+
+    def jmp(self,ops):
+        if self.FL == 1:
+            self.MAR = self.ram_read(self.PC + 1)
+            self.PC = self.reg[self.MAR]
+        else:
+            self.PC = self.bitwise_addition(self.PC, ops)
+
+    def jne(self,ops):
+        if self.FL != 1 and not 0:
+            self.MAR = self.ram_read(self.PC + 1)
+            self.PC = self.reg[self.MAR]
         else:
             self.PC = self.bitwise_addition(self.PC, ops)
